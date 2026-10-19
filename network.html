@@ -1,0 +1,399 @@
+<!--used gemini ai to make this simulation-->
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paris 2024 Network Packet Simulation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paris: {
+                            gold: '#D4AF37',
+                            navy: '#0B192C',
+                            blue: '#1E3E62',
+                            cyan: '#06B6D4',
+                            pink: '#FF6B8B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b192c; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 border-b border-amber-500/30 px-6 py-4 shrink-0 shadow-lg relative z-20">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 text-slate-950 flex items-center justify-center font-extrabold text-xl shadow-md border border-amber-200">
+                    <i class="fa-solid fa-person-swimming"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white tracking-tight">
+                        Paris 2024 <span class="text-amber-400 font-semibold">Network Packet Simulation</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Visualizing TCP & UDP Protocol Swimmers at the Paris Olympic Pool</p>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-amber-500/20 text-xs">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-bold text-amber-400">Paris La Défense Arena</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAV CONTROLS -->
+    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-3 shrink-0 relative z-10">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3">
+                <button id="btn-tcp" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-shield-halved"></i> Send TCP (Reliable)
+                </button>
+                <button id="btn-udp" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-bolt"></i> Send UDP (Fast)
+                </button>
+                <button id="btn-loss" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Simulate Loss
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-reset" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Pool
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+        
+        <!-- OLYMPIC POOL VISUALIZER -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
+            <!-- Pool Header Bar -->
+            <div class="flex justify-between items-center text-xs px-1">
+                <div class="flex items-center gap-2 font-bold text-amber-400">
+                    <i class="fa-solid fa-water"></i> Client Terminal
+                </div>
+                <div class="text-slate-400 font-mono text-[11px] hidden sm:block">
+                    50m Olympic Swimmer Lanes
+                </div>
+                <div class="flex items-center gap-2 font-bold text-cyan-400">
+                    Server Touchpad <i class="fa-solid fa-server"></i>
+                </div>
+            </div>
+
+            <!-- Pool Canvas -->
+            <div class="relative w-full h-[280px] bg-slate-950 rounded-xl overflow-hidden border border-sky-900/60 shadow-inner">
+                <canvas id="poolCanvas" class="w-full h-full block"></canvas>
+            </div>
+
+            <!-- Swimming Legend -->
+            <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 px-1 gap-2">
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400"></span> TCP Data + ACK Swimmer</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-cyan-400"></span> UDP Rapid Swimmer</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span> Packet Loss / Disqualified</span>
+                </div>
+                <div>
+                    <span class="text-slate-500">RTT (Latency): </span><span class="text-amber-400 font-mono font-bold">~80ms</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- LOG CAPTURE PANEL -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col gap-3 flex-1">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul"></i> Swimmer / Network Capture Log
+                </h2>
+                <span class="text-[11px] text-slate-500">Real-time Packet Activity</span>
+            </div>
+
+            <!-- Log Table Header -->
+            <div class="grid grid-cols-12 text-[10px] font-bold text-slate-400 uppercase bg-slate-950 p-2 rounded-lg border border-slate-800 text-center">
+                <span class="col-span-2 text-left">Time</span>
+                <span class="col-span-2">Protocol</span>
+                <span class="col-span-2">Lane</span>
+                <span class="col-span-3">Flag / Type</span>
+                <span class="col-span-3 text-right">Packet Status</span>
+            </div>
+
+            <!-- Scrollable Log Container -->
+            <div id="packet-log" class="font-mono text-xs space-y-1 max-h-[180px] overflow-y-auto pr-1">
+                <div class="text-slate-500 text-center py-4 text-xs italic">No swimmer packets launched yet. Click "Send TCP" or "Send UDP".</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 border-t border-slate-800 px-6 py-3 shrink-0 text-xs text-slate-400 relative z-10">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Stats -->
+            <div class="flex items-center gap-6">
+                <div>
+                    <span class="text-slate-500">Sent: </span>
+                    <strong id="stat-sent" class="text-white font-mono">0</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500">Delivered: </span>
+                    <strong id="stat-delivered" class="text-emerald-400 font-mono">0</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500">Loss Rate: </span>
+                    <strong id="stat-loss" class="text-rose-400 font-mono">0%</strong>
+                </div>
+                <div>
+                    <span class="text-slate-500">Est. RTT: </span>
+                    <strong id="stat-rtt" class="text-amber-400 font-mono">80 ms</strong>
+                </div>
+            </div>
+
+            <!-- Paris 2024 Tag -->
+            <div class="text-[11px] text-slate-500">
+                Paris 2024 Olympic Games Network Protocol Visualizer
+            </div>
+        </div>
+    </footer>
+
+    <!-- SIMULATION SCRIPT -->
+    <script>
+        // State
+        const state = {
+            lanes: 4,
+            packetsSent: 0,
+            packetsDelivered: 0,
+            packetsLost: 0,
+            nextLane: 0,
+            forceLossNext: false,
+            activePackets: []
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById('poolCanvas');
+        const ctx = canvas.getContext('2d');
+        const logContainer = document.getElementById('packet-log');
+
+        const btnTcp = document.getElementById('btn-tcp');
+        const btnUdp = document.getElementById('btn-udp');
+        const btnLoss = document.getElementById('btn-loss');
+        const btnReset = document.getElementById('btn-reset');
+
+        // Resize Canvas dynamically
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Packet Class
+        class PacketSwimmer {
+            constructor(id, protocol, lane, willDrop = false) {
+                this.id = id;
+                this.protocol = protocol; // 'TCP' or 'UDP'
+                this.lane = lane;
+                this.progress = 0; // 0 (Client) to 1 (Server)
+                this.direction = 1; // 1 = Client->Server, -1 = Server->Client (ACK)
+                this.isAck = false;
+                this.status = 'SWIMMING';
+                this.willDrop = willDrop;
+                this.dropPoint = 0.4 + Math.random() * 0.3;
+                this.armAngle = 0;
+            }
+
+            update(deltaTime) {
+                if (this.status !== 'SWIMMING') return;
+
+                const speed = 0.45; // Swim speed
+                this.progress += speed * deltaTime * this.direction;
+                this.armAngle += 0.2;
+
+                // Check for Loss / DQ
+                if (this.willDrop && this.progress >= this.dropPoint && this.direction === 1) {
+                    this.status = 'LOST';
+                    state.packetsLost++;
+                    addLog(this.protocol, this.lane, 'DQ / LOST', 'Disqualified (Packet Loss)', 'text-rose-400');
+                    updateFooter();
+                    return;
+                }
+
+                // Reach Server
+                if (this.direction === 1 && this.progress >= 1) {
+                    this.progress = 1;
+                    if (this.protocol === 'TCP' && !this.isAck) {
+                        // Deliver Data & Turn back as ACK
+                        addLog('TCP', this.lane, 'DATA OK', 'Touchpad Hit! Sending ACK', 'text-amber-400');
+                        this.isAck = true;
+                        this.direction = -1;
+                    } else {
+                        // UDP or finished ACK
+                        this.status = 'DELIVERED';
+                        state.packetsDelivered++;
+                        addLog(this.protocol, this.lane, 'DELIVERED', 'Packet Successfully Delivered', 'text-emerald-400');
+                        updateFooter();
+                    }
+                }
+
+                // Reach Client (ACK returned)
+                if (this.direction === -1 && this.progress <= 0) {
+                    this.progress = 0;
+                    this.status = 'DELIVERED';
+                    state.packetsDelivered++;
+                    addLog('TCP', this.lane, 'ACK RCVD', 'ACK Verified by Client', 'text-emerald-400');
+                    updateFooter();
+                }
+            }
+
+            draw(w, h) {
+                if (this.status === 'LOST') return;
+
+                const laneHeight = h / state.lanes;
+                const y = (this.lane + 0.5) * laneHeight;
+                const x = 40 + this.progress * (w - 80);
+
+                ctx.save();
+                ctx.translate(x, y);
+
+                const color = this.protocol === 'TCP' ? (this.isAck ? '#34d399' : '#f59e0b') : '#06b6d4';
+
+                // Glow
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = color;
+
+                // Swimmer Body
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Cap
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.arc(this.direction * 4, 0, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Arm strokes
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(this.armAngle) * 7, Math.sin(this.armAngle) * 5);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // Label Badge
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(-16, -20, 32, 11, 3);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.isAck ? 'ACK' : this.protocol, 0, -12);
+
+                ctx.restore();
+            }
+        }
+
+        // Spawn Packet Swimmer
+        function sendPacket(protocol) {
+            state.packetsSent++;
+            const lane = state.nextLane;
+            state.nextLane = (state.nextLane + 1) % state.lanes;
+
+            const willDrop = state.forceLossNext;
+            state.forceLossNext = false;
+            btnLoss.classList.remove('bg-rose-500', 'text-white');
+            btnLoss.classList.add('bg-rose-500/20', 'text-rose-300');
+
+            const p = new PacketSwimmer(state.packetsSent, protocol, lane, willDrop);
+            state.activePackets.push(p);
+
+            addLog(protocol, lane, protocol === 'TCP' ? 'SYN / DATA' : 'UDP STREAM', 'Swimmer Launched off Block', 'text-sky-300');
+            updateFooter();
+        }
+
+        // Add Entry to Capture Log
+        function addLog(protocol, lane, flag, statusText, colorClass) {
+            if (logContainer.children.length === 1 && logContainer.children[0].classList.contains('italic')) {
+                logContainer.innerHTML = '';
+            }
+
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 text-[11px] py-1 px-2 border-b border-slate-800/60 hover:bg-slate-900 transition';
+            row.innerHTML = `
+                <span class="col-span-2 text-slate-500 text-left">${time}</span>
+                <span class="col-span-2 text-center font-bold ${protocol === 'TCP' ? 'text-amber-400' : 'text-cyan-400'}">${protocol}</span>
+                <span class="col-span-2 text-center text-slate-300">Lane ${lane + 1}</span>
+                <span class="col-span-3 text-center font-semibold text-slate-200">${flag}</span>
+                <span class="col-span-3 text-right font-bold ${colorClass}">${statusText}</span>
+            `;
+
+            logContainer.insertBefore(row, logContainer.firstChild);
+            if (logContainer.children.length > 30) logContainer.removeChild(logContainer.lastChild);
+        }
+
+        // Update Summary Footer
+        function updateFooter() {
+            document.getElementById('stat-sent').innerText = state.packetsSent;
+            document.getElementById('stat-delivered').innerText = state.packetsDelivered;
+            const lossPct = state.packetsSent > 0 ? Math.round((state.packetsLost / state.packetsSent) * 100) : 0;
+            document.getElementById('stat-loss').innerText = `${lossPct}%`;
+        }
+
+        // Main Render Loop
+        let lastTime = performance.now();
+        function animate(now) {
+            const deltaTime = (now - lastTime) / 1000;
+            lastTime = now;
+
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+
+            // Clear Background (Deep Olympic Water)
+            ctx.fillStyle = '#062033';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw Lanes
+            const laneH = h / state.lanes;
+            for (let i = 0; i < state.lanes; i++) {
+                const y = i * laneH;
+                ctx.fillStyle = i % 2 === 0 ? 'rgba(8, 47, 73, 0.35)' : 'rgba(12, 74, 110, 0.2)';
+                ctx.fillRect(0, y, w, laneH);
+
+                // Lane Rope
+                if (i > 0) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 6]);
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
