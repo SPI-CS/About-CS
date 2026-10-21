@@ -397,3 +397,69 @@
                     ctx.moveTo(0, y);
                     ctx.lineTo(w, y);
                     ctx.stroke();
+ctx.setLineDash([]);
+                }
+
+                // Lane Marker Text
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(`LANE ${i + 1}`, 10, y + laneH / 2 + 4);
+            }
+
+            // Client Blocks (Left) & Touchpads (Right)
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, 30, h);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(26, 0, 4, h);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(w - 30, 0, 30, h);
+            ctx.fillStyle = '#d4af37';
+            ctx.fillRect(w - 30, 0, 4, h);
+
+            // Update & Draw Active Swimmers
+            state.activePackets.forEach(p => {
+                p.update(deltaTime);
+                p.draw(w, h);
+            });
+
+            // Cleanup delivered / lost
+            state.activePackets = state.activePackets.filter(p => p.status === 'SWIMMING');
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event Controls
+        btnTcp.addEventListener('click', () => sendPacket('TCP'));
+        btnUdp.addEventListener('click', () => sendPacket('UDP'));
+        
+        btnLoss.addEventListener('click', () => {
+            state.forceLossNext = !state.forceLossNext;
+            if (state.forceLossNext) {
+                btnLoss.classList.remove('bg-rose-500/20', 'text-rose-300');
+                btnLoss.classList.add('bg-rose-500', 'text-white');
+            } else {
+                btnLoss.classList.remove('bg-rose-500', 'text-white');
+                btnLoss.classList.add('bg-rose-500/20', 'text-rose-300');
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            state.packetsSent = 0;
+            state.packetsDelivered = 0;
+            state.packetsLost = 0;
+            state.nextLane = 0;
+            state.forceLossNext = false;
+            state.activePackets = [];
+            logContainer.innerHTML = '<div class="text-slate-500 text-center py-4 text-xs italic">No swimmer packets launched yet. Click "Send TCP" or "Send UDP".</div>';
+            updateFooter();
+        });
+
+        // Initialize Engine
+        window.onload = () => {
+            resizeCanvas();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
