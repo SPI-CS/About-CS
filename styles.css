@@ -1,4 +1,12 @@
  body{
-background-color: white;
-color: gray;
+ background-color: white;
+ color: gray;
+ display: flex;
+ border-style: groove;
+}
+
+ul{
+color:beige;
+background-color:aliceblue;
+border-style:outset;
 }
